@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>레크리에이션 대본 생성기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff6e9; --bg-2: #ffecd0; --card: #ffffff;
+    --ink: #3a2e22; --ink-soft: #7a6a55; --ink-faint: #a8997f;
+    --line: #f0dcc0; --orange: #f08a3c; --orange-deep: #d66f24;
+    --berry: #d6517a; --grape: #7b62b8; --leaf: #5fa05f; --sky: #4a9bc0;
+    --shadow: rgba(120, 80, 30, 0.16);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif; background: var(--bg);
+    color: var(--ink); line-height: 1.7; -webkit-tap-highlight-color: transparent;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(240,138,60,0.12), transparent 40%),
+      radial-gradient(circle at 88% 12%, rgba(214,81,122,0.10), transparent 40%);
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 18px 90px; position: relative; z-index: 1; }
+
+  header { text-align: left; padding: 96px 4px 18px; }
+
+  /* 좌측 상단 고정 타이틀 */
+  .corner-title {
+    position: fixed; top: 20px; left: 24px; z-index: 10;
+    font-family: 'Jua', sans-serif; font-size: 1.9rem;
+    color: var(--orange-deep); background: var(--bg);
+    padding: 8px 18px; border-radius: 14px;
+    box-shadow: 3px 3px 0 rgba(0,0,0,0.06);
+  }
+  @media (max-width: 600px) { .corner-title { font-size: 1.35rem; top: 14px; left: 14px; padding: 6px 12px; } }
+  .badge {
+    display: inline-block; font-family: 'Jua', sans-serif;
+    background: var(--orange); color: #fff; font-size: 0.9rem;
+    padding: 4px 16px; border-radius: 18px; transform: rotate(-2deg);
+    box-shadow: 3px 3px 0 var(--orange-deep); margin-bottom: 14px;
+  }
+  h1 { font-family: 'Jua', sans-serif; font-size: 2.7rem; letter-spacing: 0.01em; }
+  .tagline { color: var(--ink-soft); font-size: 1rem; margin-top: 4px; }
+
+  /* 조건 입력 카드 */
+  .setup {
+    background: var(--card); border: 2px solid var(--line);
+    border-radius: 18px; padding: 22px; margin: 24px 0 16px;
+    box-shadow: 0 4px 16px var(--shadow);
+  }
+  .setup-row { margin-bottom: 18px; }
+  .setup-row:last-of-type { margin-bottom: 0; }
+  .setup-label {
+    font-family: 'Jua', sans-serif; font-size: 1.05rem;
+    margin-bottom: 8px; display: flex; align-items: center; gap: 7px;
+  }
+  .setup-label .ico { font-size: 1.2rem; }
+  .opt-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .opt {
+    font-family: 'Jua', sans-serif; font-size: 0.96rem;
+    padding: 9px 18px; border: 2px solid var(--line); border-radius: 22px;
+    background: var(--bg); color: var(--ink-soft); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .opt:hover { border-color: var(--orange); }
+  .opt.on { background: var(--orange); color: #fff; border-color: var(--orange); }
+
+  .count-input {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .count-input input {
+    font-family: 'Jua', sans-serif; font-size: 1.3rem; width: 90px;
+    text-align: center; border: 2px solid var(--line); border-radius: 12px;
+    padding: 6px; background: var(--bg); color: var(--ink);
+  }
+  .count-input input:focus { outline: none; border-color: var(--orange); }
+  .count-input .unit { font-family: 'Jua', sans-serif; color: var(--ink-soft); }
+  .stepper {
+    width: 38px; height: 38px; border: 2px solid var(--line);
+    border-radius: 10px; background: var(--card); cursor: pointer;
+    font-size: 1.2rem; font-family: 'Jua', sans-serif; color: var(--orange-deep);
+    transition: all 0.14s;
+  }
+  .stepper:hover { background: var(--bg-2); }
+
+  .generate-btn {
+    width: 100%; font-family: 'Jua', sans-serif; font-size: 1.25rem;
+    padding: 15px; border: none; border-radius: 14px; cursor: pointer;
+    background: linear-gradient(120deg, var(--orange), var(--berry));
+    color: #fff; box-shadow: 0 5px 0 var(--orange-deep); transition: all 0.12s;
+    margin-top: 4px;
+  }
+  .generate-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--orange-deep); }
+  .generate-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--orange-deep); }
+
+  .toggle-line {
+    display: flex; align-items: center; gap: 10px; margin-top: 14px;
+    font-size: 0.92rem; color: var(--ink-soft);
+  }
+  .switch {
+    position: relative; width: 46px; height: 26px; flex-shrink: 0;
+    background: var(--line); border-radius: 20px; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .switch.on { background: var(--leaf); }
+  .switch::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 20px; height: 20px; background: #fff; border-radius: 50%;
+    transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .switch.on::after { transform: translateX(20px); }
+
+  /* 결과 */
+  .result-zone { display: none; }
+  .result-zone.show { display: block; animation: fade 0.4s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .result-header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap; margin: 26px 0 14px;
+  }
+  .result-header h2 { font-family: 'Jua', sans-serif; font-size: 1.5rem; }
+  .result-header .actions { display: flex; gap: 8px; }
+  .mini-btn {
+    font-family: 'Jua', sans-serif; font-size: 0.92rem;
+    padding: 9px 16px; border: 2px solid var(--ink); border-radius: 10px;
+    background: var(--card); color: var(--ink); cursor: pointer;
+    transition: all 0.14s;
+  }
+  .mini-btn:hover { transform: translateY(-2px); box-shadow: 2px 3px 0 var(--ink); }
+  .mini-btn.regen { background: var(--grape); color: #fff; border-color: var(--grape); }
+
+  .plan-summary {
+    background: var(--bg-2); border-radius: 12px; padding: 12px 16px;
+    margin-bottom: 16px; font-size: 0.92rem; color: var(--ink-soft);
+  }
+  .plan-summary b { color: var(--orange-deep); }
+
+  /* 게임 대본 카드 */
+  .game-card {
+    background: var(--card); border: 2px solid var(--line);
+    border-radius: 16px; margin-bottom: 16px; overflow: hidden;
+    box-shadow: 0 3px 12px var(--shadow);
+  }
+  .game-head {
+    padding: 14px 20px; color: #fff; display: flex;
+    align-items: center; gap: 10px;
+  }
+  .game-head .seq {
+    font-family: 'Jua', sans-serif; font-size: 1.3rem;
+    background: rgba(255,255,255,0.25); width: 36px; height: 36px;
+    border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+  }
+  .game-head .gh-text { flex: 1; }
+  .game-head h3 { font-family: 'Jua', sans-serif; font-size: 1.3rem; }
+  .game-head .gh-meta { font-size: 0.8rem; opacity: 0.9; }
+  .game-body { padding: 16px 20px; }
+  .game-summary {
+    font-size: 0.95rem; color: var(--ink-soft); margin-bottom: 14px;
+    font-style: italic;
+  }
+  .script-block { margin-bottom: 14px; }
+  .script-block:last-child { margin-bottom: 0; }
+  .sb-label {
+    font-family: 'Jua', sans-serif; font-size: 0.98rem;
+    margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+  }
+  .sb-label .dot {
+    width: 9px; height: 9px; border-radius: 50%; background: var(--orange);
+  }
+  .script-block ol { margin-left: 20px; }
+  .script-block ol li { margin-bottom: 4px; font-size: 0.94rem; }
+  .script-block .props { font-size: 0.94rem; }
+  .props-chip {
+    display: inline-block; background: var(--bg-2); border-radius: 10px;
+    padding: 2px 11px; font-size: 0.86rem; margin: 2px 4px 2px 0;
+  }
+  .mc-box {
+    background: linear-gradient(135deg, #fff3e0, #ffe7d0);
+    border-left: 4px solid var(--orange); border-radius: 8px;
+    padding: 12px 14px; font-size: 0.96rem; color: var(--ink);
+  }
+  .caution-box {
+    background: #fef0f0; border-left: 4px solid var(--berry);
+    border-radius: 8px; padding: 10px 14px; font-size: 0.9rem;
+    color: var(--ink-soft);
+  }
+  .faith-box {
+    background: #eef5ee; border-left: 4px solid var(--leaf);
+    border-radius: 8px; padding: 10px 14px; font-size: 0.92rem;
+    color: var(--ink-soft);
+  }
+  .faith-box b { color: var(--leaf); font-family: 'Jua', sans-serif; }
+
+  .placeholder {
+    text-align: center; padding: 50px 20px; color: var(--ink-faint);
+  }
+  .placeholder .big { font-size: 2.6rem; margin-bottom: 8px; }
+
+  .loading { display: none; text-align: center; padding: 50px 20px; color: var(--ink-soft); }
+  .loading.show { display: block; }
+  .loading .spinner {
+    width: 46px; height: 46px; margin: 0 auto 16px;
+    border: 5px solid var(--line); border-top-color: var(--orange);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .generate-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: 0 5px 0 var(--orange-deep); }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(90px);
+    background: var(--ink); color: #fff; font-family: 'Jua', sans-serif;
+    font-size: 0.96rem; padding: 11px 24px; border-radius: 22px; z-index: 200;
+    transition: transform 0.32s cubic-bezier(0.2,0,0.2,1);
+    box-shadow: 0 8px 20px var(--shadow);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  footer {
+    text-align: center; margin-top: 40px; padding-top: 20px;
+    border-top: 2px dashed var(--line); color: var(--ink-faint);
+    font-family: 'Jua', sans-serif; font-size: 0.9rem;
+  }
+
+  @media print {
+    body::before { display: none; }
+    .setup, .result-header .actions, .toast, header .badge, .tagline, .corner-title { display: none !important; }
+    .game-card { box-shadow: none; page-break-inside: avoid; }
+  }
+  @media (max-width: 600px) {
+    h1 { font-size: 2.1rem; }
+  }
+</style>
+</head>
+<body>
+<div class="corner-title">🎲 레크리에이션 대본 생성기</div>
+<div class="wrap">
+  <header>
+    <div class="badge">청소년부 수련회</div>
+    <p class="tagline">조건을 정하면, 게임 구성과 진행 대본을 만들어 드려요</p>
+  </header>
+
+  <div class="setup">
+    <div class="setup-row">
+      <div class="setup-label"><span class="ico">👥</span>몇 명이 함께하나요?</div>
+      <div class="count-input">
+        <button class="stepper" onclick="adjustCount(-5)">−</button>
+        <input type="number" id="count" value="30" min="4" max="200">
+        <button class="stepper" onclick="adjustCount(5)">+</button>
+        <span class="unit">명</span>
+      </div>
+    </div>
+
+    <div class="setup-row">
+      <div class="setup-label"><span class="ico">⏱️</span>시간이 얼마나 있나요?</div>
+      <div class="opt-row" id="time-opts">
+        <button class="opt on" data-v="20">20분 정도</button>
+        <button class="opt" data-v="40">40분 정도</button>
+        <button class="opt" data-v="60">60분 이상</button>
+      </div>
+    </div>
+
+    <div class="setup-row">
+      <div class="setup-label"><span class="ico">📍</span>어디서 하나요?</div>
+      <div class="opt-row" id="place-opts">
+        <button class="opt on" data-v="in">실내</button>
+        <button class="opt" data-v="out">실외 (운동장)</button>
+      </div>
+    </div>
+
+    <div class="setup-row">
+      <div class="setup-label"><span class="ico">✨</span>어떤 분위기를 원하세요?</div>
+      <div class="opt-row" id="vibe-opts">
+        <button class="opt on" data-v="ice">아이스브레이킹 (처음 만나 친해지기)</button>
+        <button class="opt" data-v="team">팀 대항전 (신나게 경쟁)</button>
+        <button class="opt" data-v="calm">차분한 마무리 (집회 전후)</button>
+      </div>
+    </div>
+
+    <div class="setup-row">
+      <div class="setup-label"><span class="ico">🎒</span>준비물을 쓸 수 있나요?</div>
+      <div class="opt-row" id="props-opts">
+        <button class="opt on" data-v="any">준비물 OK</button>
+        <button class="opt" data-v="none">맨몸 게임만</button>
+      </div>
+    </div>
+
+    <div class="toggle-line">
+      <div class="switch on" id="faith-switch" onclick="toggleFaith()"></div>
+      <span>게임 끝에 <b>신앙 연결 멘트</b> 넣기 (끄면 순수 재미용)</span>
+    </div>
+
+    <button class="generate-btn" onclick="generate()">🎲 레크리에이션 만들기</button>
+  </div>
+
+  <div class="result-zone" id="result-zone">
+    <div class="result-header">
+      <h2>오늘의 레크리에이션</h2>
+      <div class="actions">
+        <button class="mini-btn regen" onclick="generate()">🔄 다시 만들기</button>
+        <button class="mini-btn" onclick="window.print()">🖨️ 인쇄</button>
+      </div>
+    </div>
+    <div class="plan-summary" id="plan-summary"></div>
+    <div id="game-list"></div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    Gemini가 레크리에이션을 만들고 있어요…
+  </div>
+
+  <div class="placeholder" id="placeholder">
+    <div class="big">🎉</div>
+    위에서 조건을 정하고 <b>만들기</b> 버튼을 눌러보세요!
+  </div>
+
+  <footer>레크리에이션 대본 생성기 — 청소년부 수련회 준비 도구</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+// 레크리에이션 게임 재료 — 청소년부 수련회용 12종
+// place: in(실내) / out(실외) / both
+// vibe: ice(아이스브레이킹) / team(팀대항) / calm(차분한 마무리)
+// props: true(준비물 필요) / false(맨몸 가능)
+// size: 권장 최소~최대 인원
+// 게임 데이터는 이제 Gemini API가 실시간으로 생성합니다.
+
+// 팀 편성 방식
+const TEAM_METHODS = [
+  '태어난 달로 모이기 — 1~3월, 4~6월, 7~9월, 10~12월',
+  '좋아하는 색깔 외치며 같은 색끼리 모이기',
+  '번호 뽑기 — 종이에 적힌 번호대로 조 편성',
+  '생일 순서로 줄 선 뒤 앞에서부터 끊어 나누기',
+  '가위바위보로 조장 먼저 뽑고, 조장이 번갈아 조원 지목'
+];
+
+</script>
+<script>
+// ============================================
+// API 키는 이 파일에 없습니다.
+// Vercel 환경변수 GEMINI_API_KEY 에 저장되어 /api/gemini 서버 함수에서만 사용됩니다.
+// ============================================
+
+// ============================================
+// 상태
+// ============================================
+const state = {
+  count: 30,
+  time: 20,
+  place: 'in',
+  vibe: 'ice',
+  props: 'any',
+  faith: true
+};
+const HEAD_COLORS = ['#f08a3c', '#d6517a', '#7b62b8', '#5fa05f', '#4a9bc0'];
+
+// ============================================
+// 입력 컨트롤
+// ============================================
+function adjustCount(delta) {
+  const input = document.getElementById('count');
+  let v = parseInt(input.value || '30', 10) + delta;
+  v = Math.max(4, Math.min(200, v));
+  input.value = v;
+  state.count = v;
+}
+document.getElementById('count').addEventListener('input', e => {
+  let v = parseInt(e.target.value || '30', 10);
+  if (isNaN(v)) v = 30;
+  state.count = Math.max(4, Math.min(200, v));
+});
+
+function bindOpts(rowId, key) {
+  document.querySelectorAll('#' + rowId + ' .opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('#' + rowId + ' .opt').forEach(o => o.classList.remove('on'));
+      opt.classList.add('on');
+      const v = opt.dataset.v;
+      state[key] = (key === 'time') ? parseInt(v, 10) : v;
+    });
+  });
+}
+bindOpts('time-opts', 'time');
+bindOpts('place-opts', 'place');
+bindOpts('vibe-opts', 'vibe');
+bindOpts('props-opts', 'props');
+
+function toggleFaith() {
+  state.faith = !state.faith;
+  document.getElementById('faith-switch').classList.toggle('on', state.faith);
+}
+
+// ============================================
+// 토스트
+// ============================================
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ============================================
+// 게임 필터링 + 선정
+// ============================================
+async function pickGames() {
+  const vibeLabel = { ice: '아이스브레이킹 (처음 만나 친해지기)', team: '팀 대항전 (신나게 경쟁)', calm: '차분한 마무리 (집회 전후)' }[state.vibe];
+  const placeLabel = { in: '실내', out: '실외(운동장)' }[state.place];
+  const propsLabel = state.props === 'none' ? '준비물 없이 맨몸으로만 가능한 게임만' : '준비물을 사용해도 됨';
+  const gameCount = state.time <= 20 ? 1 : (state.time <= 40 ? 2 : 3);
+
+  const prompt = `당신은 한국 교회 청소년부 수련회 레크리에이션 전문 인도자입니다.
+아래 조건에 딱 맞는 레크리에이션 게임 ${gameCount}개를 구성해 주세요.
+
+조건:
+- 참가 인원: ${state.count}명
+- 진행 시간: 약 ${state.time}분 (게임 ${gameCount}개)
+- 장소: ${placeLabel}
+- 원하는 분위기: ${vibeLabel}
+- 준비물: ${propsLabel}
+
+각 게임은 청소년부 학생들이 실제로 즐겁게 할 수 있는 검증된 게임이어야 하며, 인도자가 그대로 진행할 수 있을 만큼 구체적이어야 합니다.
+
+반드시 아래 JSON 형식으로만 응답하세요. 설명, 마크다운 백틱(\`\`\`), 다른 텍스트 없이 순수 JSON 배열만 출력하세요:
+
+[
+  {
+    "name": "게임 이름",
+    "minutes": [최소분, 최대분],
+    "summary": "한 문장 게임 소개",
+    "props_list": ["준비물1", "준비물2"],
+    "steps": ["진행 순서 1", "진행 순서 2", "..."],
+    "mc": "인도자가 그대로 읽을 멘트 (큰따옴표로 감싼 실제 대사체)",
+    "caution": "진행 시 주의할 점",
+    "faith": "게임을 신앙과 연결하는 마무리 한 마디 (개혁주의 신앙 관점, 큰따옴표 대사체)"
+  }
+]
+
+steps는 4~6개, props_list는 준비물이 없으면 빈 배열 []로 하세요.`;
+
+  const response = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: prompt, temperature: 1.0, jsonMode: true })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error('API 오류 (' + response.status + '): ' + errText.slice(0, 200));
+  }
+
+  const data = await response.json();
+  let text = data?.text || '';
+  text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+  let games;
+  try {
+    games = JSON.parse(text);
+  } catch (e) {
+    throw new Error('PARSE_FAIL');
+  }
+  if (!Array.isArray(games)) games = [games];
+
+  // 안전하게 필드 보정
+  return games.map(g => ({
+    name: g.name || '게임',
+    minutes: Array.isArray(g.minutes) && g.minutes.length === 2 ? g.minutes : [10, 15],
+    summary: g.summary || '',
+    props_list: Array.isArray(g.props_list) ? g.props_list : [],
+    steps: Array.isArray(g.steps) ? g.steps : [],
+    mc: g.mc || '',
+    caution: g.caution || '',
+    faith: g.faith || ''
+  }));
+}
+
+// 인원에 맞춘 조 편성 추천
+function recommendTeams() {
+  const c = state.count;
+  if (state.vibe === 'calm') return null; // 차분한 활동은 조 편성 불필요
+  let teamCount;
+  if (c <= 12) teamCount = 2;
+  else if (c <= 30) teamCount = 3;
+  else if (c <= 50) teamCount = 4;
+  else teamCount = 5;
+  const perTeam = Math.round(c / teamCount);
+  const method = TEAM_METHODS[Math.floor(Math.random() * TEAM_METHODS.length)];
+  return { teamCount, perTeam, method };
+}
+
+// ============================================
+// 렌더링
+// ============================================
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function generate() {
+  const btn = document.querySelector('.generate-btn');
+  const loading = document.getElementById('loading');
+  const placeholder = document.getElementById('placeholder');
+  const resultZone = document.getElementById('result-zone');
+
+  let games;
+  try {
+    btn.disabled = true;
+    placeholder.style.display = 'none';
+    resultZone.classList.remove('show');
+    loading.classList.add('show');
+    loading.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    games = await pickGames();
+  } catch (err) {
+    loading.classList.remove('show');
+    btn.disabled = false;
+    if (err.message === 'NO_KEY') {
+      toast('서버에 API 키가 설정되지 않았어요. 관리자에게 문의해 주세요');
+    } else if (err.message === 'PARSE_FAIL') {
+      toast('응답을 해석하지 못했어요. 다시 시도해 주세요');
+    } else if (/\(503\)|\(429\)/.test(err.message)) {
+      toast('지금 잠깐 혼잡해요. 잠시 후 다시 시도해 주세요');
+    } else {
+      toast('생성 실패: ' + err.message);
+    }
+    placeholder.style.display = '';
+    return;
+  }
+
+  loading.classList.remove('show');
+  btn.disabled = false;
+
+  if (!games || games.length === 0) {
+    toast('게임을 만들지 못했어요. 다시 시도해 주세요');
+    placeholder.style.display = '';
+    return;
+  }
+  const teams = recommendTeams();
+
+  // 요약
+  const vibeLabel = { ice: '아이스브레이킹', team: '팀 대항전', calm: '차분한 마무리' }[state.vibe];
+  const placeLabel = { in: '실내', out: '실외' }[state.place];
+  let summary = `<b>${state.count}명</b> · ${placeLabel} · ${vibeLabel} · 약 ${state.time}분 · 게임 ${games.length}개`;
+  if (teams) {
+    summary += `<br>👉 추천 조 편성: <b>${teams.teamCount}개 조</b> (조당 약 ${teams.perTeam}명) · 편성 방법: ${escapeHtml(teams.method)}`;
+  }
+  document.getElementById('plan-summary').innerHTML = summary;
+
+  // 게임 카드들
+  const list = document.getElementById('game-list');
+  list.innerHTML = games.map((g, i) => {
+    const color = HEAD_COLORS[i % HEAD_COLORS.length];
+    const minutes = g.minutes[0] + '~' + g.minutes[1] + '분';
+
+    const propsHtml = g.props_list.length
+      ? g.props_list.map(p => `<span class="props-chip">${escapeHtml(p)}</span>`).join('')
+      : '<span class="props-chip">준비물 없이 맨몸으로 OK</span>';
+
+    const stepsHtml = g.steps.map(s => `<li>${escapeHtml(s)}</li>`).join('');
+
+    const faithHtml = state.faith
+      ? `<div class="script-block">
+           <div class="sb-label"><span class="dot" style="background:var(--leaf)"></span>신앙 연결 한 마디</div>
+           <div class="faith-box"><b>게임을 마치며</b> — ${escapeHtml(g.faith)}</div>
+         </div>`
+      : '';
+
+    return `
+      <div class="game-card">
+        <div class="game-head" style="background:${color}">
+          <div class="seq">${i + 1}</div>
+          <div class="gh-text">
+            <h3>${escapeHtml(g.name)}</h3>
+            <div class="gh-meta">${minutes} · ${escapeHtml(g.summary.length > 0 ? '진행 대본' : '')}</div>
+          </div>
+        </div>
+        <div class="game-body">
+          <div class="game-summary">${escapeHtml(g.summary)}</div>
+
+          <div class="script-block">
+            <div class="sb-label"><span class="dot"></span>준비물</div>
+            <div class="props">${propsHtml}</div>
+          </div>
+
+          <div class="script-block">
+            <div class="sb-label"><span class="dot"></span>진행 순서</div>
+            <ol>${stepsHtml}</ol>
+          </div>
+
+          <div class="script-block">
+            <div class="sb-label"><span class="dot"></span>인도자 멘트 (그대로 읽으세요)</div>
+            <div class="mc-box">${escapeHtml(g.mc)}</div>
+          </div>
+
+          <div class="script-block">
+            <div class="sb-label"><span class="dot" style="background:var(--berry)"></span>이것만은 주의!</div>
+            <div class="caution-box">${escapeHtml(g.caution)}</div>
+          </div>
+
+          ${faithHtml}
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('result-zone').classList.add('show');
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('result-zone').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  toast('레크리에이션이 만들어졌어요!');
+}
+
+</script>
+</body>
+</html>
